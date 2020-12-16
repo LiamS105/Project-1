@@ -30,8 +30,7 @@
             position: relative;
             top: 50%;
             transform: translateY(-50%);
-        }
-        
+        } 
         
         #header {
             position: absolute;
@@ -93,9 +92,7 @@
             height: 20px;
             width: 20px;
             border-radius: 50%;
-            
         }
-        
     </style>
 </head>
 <body>
@@ -105,15 +102,11 @@
            <img src="img/loader.gif">
        </div>
    </container>
-   
-   
-   
-    <div id="header"></div>
 
+    <div id="header"></div>
     <div id = "inner">
        <button id="button1" class="camera-button" onclick="javascript:moveCam()">ABOVE</button>
        <button id="button2" class="camera-button" onclick="javascript:moveCam()">BELOW</button>
-    
         <div id = "interact">
         <input class="slide" type="range" min="0" max="8" step="1" value="0" oninput="javascript:showVal(this.value)">
         <p>DRAG THE SLIDER TO MOVE TIME ALONG</p>
@@ -131,6 +124,13 @@
         var scrnW = window.innerWidth, scrnH = window.innerHeight; 
         var positionTween = 0
         var rotationTween = 0
+        
+        var lightBlue = new THREE.Color()
+        const material = new THREE.MeshPhongMaterial({
+            color: lightBlue.setHSL(.5, 1, .5),
+            opacity: 0.5,
+            transparent: true,
+        });
         
         function checkLoad() {
             loaded++;
@@ -153,13 +153,10 @@
             
             // Add a directional light
             var light = new THREE.SpotLight(0xffffff, 1);
-            light.position.set(1, 6, 2);
-            light.target.position.set(0,0,0);
+            light.position.set(1, 120, 50);
             light.name = "Sunlight";
             scene.add(light);
             
-            
-
             // load Blender Collada Model
             // Blender file is included in models: water.blend
             // C4D should work the same, just change the name and mesh you're looking for.
@@ -168,14 +165,12 @@
             loader.load('models/water.dae', function(collada){
                 model = collada.scene;
                 model.scale.x = model.scale.y = model.scale.z = 1;
-                
                 scene.add(model);
-                
                 // find water and assign to global variable
-                river = scene.getObjectByName('water',true);
+                river = scene.getObjectByName('water',true); //load the main model//
                 //river.children[0].material.color = {r:1.5, g:1.5, b:1.5};// brighten or dim look
-                fish = scene.getObjectByName('fishy',true);
-                checkLoad();
+                fish = scene.getObjectByName('fishy',true); //load the fish model from the main model//
+                checkLoad(); //makes sure the model is properly loaded//
                 fish.position.set(6, 2, 0);
                 render();
             });
@@ -183,46 +178,32 @@
             camera.position.set(35, 50, 39);
             // Camera orbit controls
             var controls = new THREE.OrbitControls(camera, renderer.domElement);
-            
-            
-            var lightBlue = new THREE.Color()
-            const material = new THREE.MeshPhongMaterial({
-                color: lightBlue.setHSL(.5, 1, .5),
-                opacity: 0.5,
-                transparent: true,
-            });
-            g1 = new THREE.BoxGeometry( 8, 3, 8 );
+
+            g1 = new THREE.BoxGeometry( 160, 3, 200 );
             cube = new THREE.Mesh(g1, material);
             scene.add(cube);
             cube.position.set(0, 1, 0);
-            
+
             geometry = new THREE.CircleGeometry(6, 100);
             geometry.vertices.shift();
-
             circle = new THREE.Line(
                 geometry,
                 new THREE.LineDashedMaterial({color: 'aqua'})
             );
             circle.rotation.x = Math.PI * 0.5;
 
-        
             orbit = new THREE.Group();
            // orbit.add(circle)
             var orbitDir = new THREE.Group();
             orbitDir.rotation.x = 0;
             orbitDir.add(orbit);
             scene.add(orbitDir);
-
             // Camera orbit controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
         }
         
         function render(){
             requestAnimationFrame(render);
-            
-            // animated texture
-            //river.children[0].material.map.offset.y += 0.005;// play with speed
-            
             renderer.render(scene, camera);
             TWEEN.update();
         }
@@ -235,15 +216,15 @@
             .easing(TWEEN.Easing.Quadratic.InOut);
 
             var buttonCameraSettings = {
-            button1: {
-            position: {x: 1, y: 0, z: 0},
-            rotation: {x: 0, y: Math.PI, z: 0}
-            },
-            button2: {
-            // button2: {
-            //position: {x: 0, y: 3, z: -17},
-            //rotation: {x: 0, y: Math.PI, z: 0}
-            }
+                button1: {
+                    position: {x: 1, y: 0, z: 0},
+                    rotation: {x: 0, y: Math.PI, z: 0}
+                },
+                button2: {
+                    // button2: {
+                    //position: {x: 0, y: 3, z: -17},
+                    //rotation: {x: 0, y: Math.PI, z: 0}
+                }
             };
             
             var button1 = document.getElementById('button1');
@@ -263,9 +244,9 @@
                 positionTween.to(params.position, 1000).start();
             }
 
-            if (params.rotation) {a
-            rotationTween.stop();
-            rotationTween.to(params.rotation, 1000).start();
+            if (params.rotation) {
+                rotationTween.stop();
+                rotationTween.to(params.rotation, 1000).start();
             }
         }   
         
@@ -274,6 +255,7 @@
             if (val != lastVal) {
                 if (val > lastVal) {
                     
+                    
                     //console.log("tree" + val + '  last' + lastVal)
                     var trees = scene.getObjectByName("tree" + val, true);
                     new TWEEN.Tween(trees.position).to({
@@ -281,6 +263,11 @@
                         y: -40
                         
                     }, 800).easing(TWEEN.Easing.Elastic.InOut).start(); 
+                    scene.remove(cube)
+                    var g1 = new THREE.BoxGeometry(80, 2 + (val*3), 80);
+                    cube = new THREE.Mesh(g1, material);
+                    scene.add(cube)
+                    renderer.render(scene, camera);
                     
                 } else {
                     
@@ -291,6 +278,11 @@
                         y: 1
                     
                     }, 1000).easing(TWEEN.Easing.Elastic.InOut).start();
+                    scene.remove(cube)
+                    var g1 = new THREE.BoxGeometry(80, 2 + (val*3), 80);
+                    cube = new THREE.Mesh(g1, material);
+                    scene.add(cube)
+                    renderer.render(scene, camera);
                 }
                 lastVal = val;
             }
