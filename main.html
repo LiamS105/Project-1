@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mangrove_Forest</title>
+    <style>
+        body{
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        #preloader{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #44d4ff;
+            z-index: 200;
+        }
+        
+        #loading{
+            text-align: center;
+            height: 200px;
+            width: 200px;
+            color:#fff;
+            margin:auto;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        
+        #header {
+            position: absolute;
+            width: 100%;
+            z-index: 100;
+        }
+        #badge{
+            margin-top: 8px;
+            width: 90%;
+            max-width: 640px;
+        }
+        
+        #panel{
+            max-width: 640;
+            background-color: rgba(255, 255, 255, 0.3);
+            margin:50px;
+            text-align: right;
+            border-radius:5px;
+        }
+        #inner{
+            position:absolute;
+            bottom: 10px;
+            z-index: 100%;
+            width: 100%;
+            text-align: right;
+        }
+        
+        .camera-button {
+          background-color: #228B22;
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: left;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 10px;
+          cursor: pointer;
+        }
+        
+        #interact{
+            bottom: 10px;
+            z-index: 100%;
+            width: 100%;
+            text-align: center;
+        }
+        
+        input[type=range].slide{
+            -webkit-appearance: none;
+            background-color: #123;
+            height: 6px;
+            width: 30opx;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb{
+            -webkit-appearance:none;
+            background-color: #228B22;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            
+        }
+        
+    </style>
+</head>
+<body>
+   <container id = "preloader">
+       <div id="loading">
+          <p>Loading</p>
+           <img src="img/loader.gif">
+       </div>
+   </container>
+   
+   
+   
+    <div id="header"></div>
+
+    <div id = "inner">
+       <button id="button1" class="camera-button" onclick="javascript:moveCam()">ABOVE</button>
+       <button id="button2" class="camera-button" onclick="javascript:moveCam()">BELOW</button>
+    
+        <div id = "interact">
+        <input class="slide" type="range" min="0" max="8" step="1" value="0" oninput="javascript:showVal(this.value)">
+        <p>DRAG THE SLIDER TO MOVE TIME ALONG</p>
+    </div>
+    </div>
+   
+    <script src="js/three.min.js"></script>
+    <script src="js/Detector.js"></script>
+    <script src="js/ColladaLoader.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/tween.min.js"></script>
+    
+    <script id="Main_Program">
+        var scene, camera, fish, renderer, model, river, cube, lastVal = 0, itemsToLoad = 1, loaded = 0;
+        var scrnW = window.innerWidth, scrnH = window.innerHeight; 
+        var positionTween = 0
+        var rotationTween = 0
+        
+        function checkLoad() {
+            loaded++;
+            if (loaded == itemsToLoad) {
+                render (); document.getElementById("preloader").style.visibility = 'hidden';
+            }
+        }
+
+        function init(){
+            
+            // Add scene, camera and renderer
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(35, scrnW/scrnH, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setSize(scrnW, scrnH);
+            renderer.setClearColor(0xcaf8f1, 1);
+            document.body.appendChild(renderer.domElement);            
+            
+            // Add a directional light
+            var light = new THREE.SpotLight(0xffffff, 1);
+            light.position.set(1, 6, 2);
+            light.target.position.set(0,0,0);
+            light.name = "Sunlight";
+            scene.add(light);
+            
+            
+
+            // load Blender Collada Model
+            // Blender file is included in models: water.blend
+            // C4D should work the same, just change the name and mesh you're looking for.
+            var loader = new THREE.ColladaLoader();
+            loader.options.convertUpAxis = true;
+            loader.load('models/water.dae', function(collada){
+                model = collada.scene;
+                model.scale.x = model.scale.y = model.scale.z = 1;
+                
+                scene.add(model);
+                
+                // find water and assign to global variable
+                river = scene.getObjectByName('water',true);
+                //river.children[0].material.color = {r:1.5, g:1.5, b:1.5};// brighten or dim look
+                fish = scene.getObjectByName('fishy',true);
+                checkLoad();
+                fish.position.set(6, 2, 0);
+                render();
+            });
+            
+            camera.position.set(35, 50, 39);
+            // Camera orbit controls
+            var controls = new THREE.OrbitControls(camera, renderer.domElement);
+            
+            
+            var lightBlue = new THREE.Color()
+            const material = new THREE.MeshPhongMaterial({
+                color: lightBlue.setHSL(.5, 1, .5),
+                opacity: 0.5,
+                transparent: true,
+            });
+            g1 = new THREE.BoxGeometry( 8, 3, 8 );
+            cube = new THREE.Mesh(g1, material);
+            scene.add(cube);
+            cube.position.set(0, 1, 0);
+            
+            geometry = new THREE.CircleGeometry(6, 100);
+            geometry.vertices.shift();
+
+            circle = new THREE.Line(
+                geometry,
+                new THREE.LineDashedMaterial({color: 'aqua'})
+            );
+            circle.rotation.x = Math.PI * 0.5;
+
+        
+            orbit = new THREE.Group();
+           // orbit.add(circle)
+            var orbitDir = new THREE.Group();
+            orbitDir.rotation.x = 0;
+            orbitDir.add(orbit);
+            scene.add(orbitDir);
+
+            // Camera orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+        }
+        
+        function render(){
+            requestAnimationFrame(render);
+            
+            // animated texture
+            //river.children[0].material.map.offset.y += 0.005;// play with speed
+            
+            renderer.render(scene, camera);
+            TWEEN.update();
+        }
+        
+        function moveCam() {
+            console.log("moveCam")
+            positionTween = new TWEEN.Tween(camera.position)
+            .easing(TWEEN.Easing.Quadratic.InOut);
+            vrotationTween = new TWEEN.Tween(camera.rotation)
+            .easing(TWEEN.Easing.Quadratic.InOut);
+
+            var buttonCameraSettings = {
+            button1: {
+            position: {x: 1, y: 0, z: 0},
+            rotation: {x: 0, y: Math.PI, z: 0}
+            },
+            button2: {
+            // button2: {
+            //position: {x: 0, y: 3, z: -17},
+            //rotation: {x: 0, y: Math.PI, z: 0}
+            }
+            };
+            
+            var button1 = document.getElementById('button1');
+            button1.addEventListener('click', function(ev) {
+            var buttonId = ev.target.id;
+            var cameraSettings = buttonCameraSettings[buttonId];
+
+            updateCameraTweens(cameraSettings);
+            });
+        }
+        
+        
+        function updateCameraTweens(params) {
+            console.log("updateCameraTweens")
+            if (params.position) {
+                positionTween.stop();
+                positionTween.to(params.position, 1000).start();
+            }
+
+            if (params.rotation) {a
+            rotationTween.stop();
+            rotationTween.to(params.rotation, 1000).start();
+            }
+        }   
+        
+
+        function showVal(val) {
+            if (val != lastVal) {
+                if (val > lastVal) {
+                    
+                    //console.log("tree" + val + '  last' + lastVal)
+                    var trees = scene.getObjectByName("tree" + val, true);
+                    new TWEEN.Tween(trees.position).to({
+                        
+                        y: -40
+                        
+                    }, 800).easing(TWEEN.Easing.Elastic.InOut).start(); 
+                    
+                } else {
+                    
+                    var trees = scene.getObjectByName("tree" + lastVal, true);
+                    console.log(trees)
+                    new TWEEN.Tween(trees.position).to({
+                        
+                        y: 1
+                    
+                    }, 1000).easing(TWEEN.Easing.Elastic.InOut).start();
+                }
+                lastVal = val;
+            }
+        }
+        
+
+        init();
+        
+        function animate(time) {
+            orbit.rotation.y += 0.01;
+            if(orbit.rotation.y > (2 * Math.PI)) orbit.rotation.y = 0 //resets the animation when the fish reaches 2*pie//
+            if(fish != null) {
+                fish.position.set(Math.cos(orbit.rotation.y) * 3, 2, Math.sin(orbit.rotation.y) * 6) //moves the fish in the circle
+                fish.rotation.y = -orbit.rotation.y + Math.PI + (Math.sin(orbit.rotation.y*8)/4) //akes the fish face the orbit + makes the fish wiggle//
+            }
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
